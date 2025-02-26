@@ -5,6 +5,9 @@ on:
     - cron: '*/6 * * * *'  # Every 6 minutes
   workflow_dispatch:  # Manual trigger
 
+permissions:
+  contents: write
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
@@ -34,20 +37,21 @@ jobs:
           
           # Fetch the latest ChromeDriver version for this Chrome major version
           DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
-          if [ -z "$DRIVER_VERSION" ]; then
+          # Check if the response contains an error (XML)
+          if echo "$DRIVER_VERSION" | grep -q "<Error>"; then
             echo "No exact match for Chrome $CHROME_VERSION. Falling back to latest available."
             DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE")
           fi
           echo "Using ChromeDriver version: $DRIVER_VERSION"
           
           # Download and install ChromeDriver
-          wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip"
+          wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip" || { echo "Failed to download ChromeDriver"; exit 1; }
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/chromedriver
           
           # Verify installation
-          chromedriver --version || echo "ChromeDriver installation failed"
+          chromedriver --version || { echo "ChromeDriver installation failed"; exit 1; }
       - name: Run scraping script
         run: python scrape_and_plot.py
       - name: Commit changes
