@@ -35,6 +35,9 @@ jobs:
           CHROME_VERSION=$(google-chrome --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
           echo "Chrome version: $CHROME_VERSION"
           
+          # Remove any existing ChromeDriver to avoid conflicts
+          sudo rm -f /usr/local/bin/chromedriver
+          
           # Fetch the latest ChromeDriver version for this Chrome major version
           DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
           # Check if the response contains an error (XML)
@@ -50,8 +53,13 @@ jobs:
           sudo mv chromedriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/chromedriver
           
-          # Verify installation
-          chromedriver --version || { echo "ChromeDriver installation failed"; exit 1; }
+          # Verify installation matches Chrome version
+          INSTALLED_DRIVER_VERSION=$(chromedriver --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
+          echo "Installed ChromeDriver version: $INSTALLED_DRIVER_VERSION"
+          if ! echo "$INSTALLED_DRIVER_VERSION" | grep -q "^${CHROME_VERSION}"; then
+            echo "Error: ChromeDriver version ($INSTALLED_DRIVER_VERSION) does not match Chrome version ($CHROME_VERSION)"
+            exit 1
+          fi
       - name: Run scraping script
         run: python scrape_and_plot.py
       - name: Commit changes
@@ -59,5 +67,4 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add strikes.json australia_lightning_24h.png
-          git commit -m "Update strikes and PNG" || echo "No changes to commit"
-          git push
+          git commit -m "Update strikes and PNG" || echo
