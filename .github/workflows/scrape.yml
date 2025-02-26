@@ -42,13 +42,18 @@ jobs:
           DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
           if echo "$DRIVER_VERSION" | grep -q "<Error>"; then
             echo "No exact match for Chrome $CHROME_VERSION. Trying latest releases..."
-            # Fetch list of available versions and find the latest matching major version
-            ALL_VERSIONS=$(curl -s "https://chromedriver.storage.googleapis.com/?delimiter=/&prefix=" | grep -oP '(?<=<Key>)[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(?=/)')
+            # Fetch list of versions and extract with basic grep/sed
+            ALL_VERSIONS=$(curl -s "https://chromedriver.storage.googleapis.com/?delimiter=/&prefix=" | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | sort -V)
+            echo "Available versions: $ALL_VERSIONS"
             DRIVER_VERSION=$(echo "$ALL_VERSIONS" | grep "^${CHROME_VERSION}" | tail -n 1)
             if [ -z "$DRIVER_VERSION" ]; then
-              echo "No matching 133.x version found. Falling back to latest available."
-              DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE")
+              echo "No matching $CHROME_VERSION.x version found. Falling back to latest available."
+              DRIVER_VERSION=$(echo "$ALL_VERSIONS" | tail -n 1)
             fi
+          fi
+          if [ -z "$DRIVER_VERSION" ]; then
+            echo "Error: Could not determine a valid ChromeDriver version."
+            exit 1
           fi
           echo "Using ChromeDriver version: $DRIVER_VERSION"
           
