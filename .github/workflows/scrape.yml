@@ -20,17 +20,34 @@ jobs:
           pip install selenium matplotlib cartopy
           sudo apt-get update
           sudo apt-get install -y libgeos-dev  # For cartopy
-      - name: Install Chrome and ChromeDriver
-        run: |
-          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-          echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-          CHROME_VERSION=$(google-chrome --version | grep -oE "[0-9]+\\.[0-9]+\\.[0-9]+")
-          wget -q "https://chromedriver.storage.googleapis.com/$(curl -s https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION})/chromedriver_linux64.zip"
-          unzip chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin/
-          chmod +x /usr/local/bin/chromedriver
+     - name: Install Chrome and ChromeDriver
+  run: |
+    # Install Chrome
+    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+    echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+    sudo apt-get update
+    sudo apt-get install -y google-chrome-stable
+    
+    # Get Chrome version
+    CHROME_VERSION=$(google-chrome --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
+    echo "Chrome version: $CHROME_VERSION"
+    
+    # Fetch the latest ChromeDriver version for this Chrome major version
+    DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
+    if [ -z "$DRIVER_VERSION" ]; then
+      echo "No exact match for Chrome $CHROME_VERSION. Falling back to latest available."
+      DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE")
+    fi
+    echo "Using ChromeDriver version: $DRIVER_VERSION"
+    
+    # Download and install ChromeDriver
+    wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip"
+    unzip chromedriver_linux64.zip
+    sudo mv chromedriver /usr/local/bin/
+    sudo chmod +x /usr/local/bin/chromedriver
+    
+    # Verify installation
+    chromedriver --version || echo "ChromeDriver installation failed"
       - name: Run scraping script
         run: python scrape_and_plot.py
       - name: Commit changes
