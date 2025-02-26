@@ -2,11 +2,7 @@ name: Scrape Lightning Strikes
 
 on:
   schedule:
-<<<<<<< HEAD
-    - cron: '*/6 * * * *'  # Every 6 minutes
-=======
     - cron: '*/5 * * * *'  # Every 5 minutes
->>>>>>> 902c6d309fe9be96f566525e41f239f01de6e6c1
   workflow_dispatch:  # Manual trigger
 
 permissions:
