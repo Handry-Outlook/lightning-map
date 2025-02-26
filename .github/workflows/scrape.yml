@@ -41,19 +41,18 @@ jobs:
           # Fetch the latest ChromeDriver version for this Chrome major version
           DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
           if echo "$DRIVER_VERSION" | grep -q "<Error>"; then
-            echo "No exact match for Chrome $CHROME_VERSION. Trying latest releases..."
-            # Fetch list of versions and extract with basic grep/sed
+            echo "No exact match for Chrome $CHROME_VERSION. Checking available releases..."
             ALL_VERSIONS=$(curl -s "https://chromedriver.storage.googleapis.com/?delimiter=/&prefix=" | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | sort -V)
             echo "Available versions: $ALL_VERSIONS"
             DRIVER_VERSION=$(echo "$ALL_VERSIONS" | grep "^${CHROME_VERSION}" | tail -n 1)
             if [ -z "$DRIVER_VERSION" ]; then
-              echo "No matching $CHROME_VERSION.x version found. Falling back to latest available."
-              DRIVER_VERSION=$(echo "$ALL_VERSIONS" | tail -n 1)
+              echo "No matching $CHROME_VERSION.x version found. Using hardcoded fallback for Chrome 133.x."
+              DRIVER_VERSION="133.0.6943.141"  # Hardcoded fallback as of Feb 2025
             fi
           fi
           if [ -z "$DRIVER_VERSION" ]; then
-            echo "Error: Could not determine a valid ChromeDriver version."
-            exit 1
+            echo "Error: Could not determine a valid ChromeDriver version. Using hardcoded fallback."
+            DRIVER_VERSION="133.0.6943.141"
           fi
           echo "Using ChromeDriver version: $DRIVER_VERSION"
           
