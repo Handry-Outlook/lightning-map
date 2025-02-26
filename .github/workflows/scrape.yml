@@ -40,10 +40,15 @@ jobs:
           
           # Fetch the latest ChromeDriver version for this Chrome major version
           DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
-          # Check if the response contains an error (XML)
           if echo "$DRIVER_VERSION" | grep -q "<Error>"; then
-            echo "No exact match for Chrome $CHROME_VERSION. Falling back to latest available."
-            DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE")
+            echo "No exact match for Chrome $CHROME_VERSION. Trying latest releases..."
+            # Fetch list of available versions and find the latest matching major version
+            ALL_VERSIONS=$(curl -s "https://chromedriver.storage.googleapis.com/?delimiter=/&prefix=" | grep -oP '(?<=<Key>)[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(?=/)')
+            DRIVER_VERSION=$(echo "$ALL_VERSIONS" | grep "^${CHROME_VERSION}" | tail -n 1)
+            if [ -z "$DRIVER_VERSION" ]; then
+              echo "No matching 133.x version found. Falling back to latest available."
+              DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE")
+            fi
           fi
           echo "Using ChromeDriver version: $DRIVER_VERSION"
           
@@ -67,4 +72,5 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add strikes.json australia_lightning_24h.png
-          git commit -m "Update strikes and PNG" || echo
+          git commit -m "Update strikes and PNG" || echo "No changes to commit"
+          git push
