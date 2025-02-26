@@ -100,3 +100,4 @@ plt.close()
 
 print("PNG saved as 'worldwide_lightning_all_time.png'")
 
+
