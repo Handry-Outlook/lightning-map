@@ -47,17 +47,17 @@ jobs:
             DRIVER_VERSION=$(echo "$ALL_VERSIONS" | grep "^${CHROME_VERSION}" | tail -n 1)
             if [ -z "$DRIVER_VERSION" ]; then
               echo "No matching $CHROME_VERSION.x version found. Using hardcoded fallback for Chrome 133.x."
-              DRIVER_VERSION="133.0.6943.141"  # Hardcoded fallback as of Feb 2025
+              DRIVER_VERSION="133.0.6943.106"  # Known compatible version for Chrome 133.x
             fi
           fi
           if [ -z "$DRIVER_VERSION" ]; then
             echo "Error: Could not determine a valid ChromeDriver version. Using hardcoded fallback."
-            DRIVER_VERSION="133.0.6943.141"
+            DRIVER_VERSION="133.0.6943.106"
           fi
           echo "Using ChromeDriver version: $DRIVER_VERSION"
           
-          # Download and install ChromeDriver
-          wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip" || { echo "Failed to download ChromeDriver"; exit 1; }
+          # Download and install ChromeDriver with verbose output
+          wget -v "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip" || { echo "Failed to download ChromeDriver version $DRIVER_VERSION"; exit 1; }
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/chromedriver
