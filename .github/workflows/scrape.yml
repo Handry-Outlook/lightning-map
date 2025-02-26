@@ -38,7 +38,7 @@ jobs:
           # Remove any existing ChromeDriver to avoid conflicts
           sudo rm -f /usr/local/bin/chromedriver
           
-<<<<<<< HEAD
+
           # Fetch the latest ChromeDriver version for this Chrome major version
           DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
           if echo "$DRIVER_VERSION" | grep -q "<Error>"; then
@@ -62,7 +62,7 @@ jobs:
           wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip" || { echo "Failed to download ChromeDriver"; exit 1; }
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/
-=======
+
           # Try to fetch ChromeDriver from primary source
           DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
           if echo "$DRIVER_VERSION" | grep -q "<Error>"; then
@@ -94,19 +94,19 @@ jobs:
           else
             sudo mv chromedriver /usr/local/bin/
           fi
->>>>>>> 902c6d309fe9be96f566525e41f239f01de6e6c1
+
           sudo chmod +x /usr/local/bin/chromedriver
           
           # Verify installation matches Chrome version
           INSTALLED_DRIVER_VERSION=$(chromedriver --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
           echo "Installed ChromeDriver version: $INSTALLED_DRIVER_VERSION"
           if ! echo "$INSTALLED_DRIVER_VERSION" | grep -q "^${CHROME_VERSION}"; then
-<<<<<<< HEAD
+
             echo "Error: ChromeDriver version ($INSTALLED_DRIVER_VERSION) does not match Chrome version ($CHROME_VERSION)"
             exit 1
-=======
+
             echo "Warning: ChromeDriver version ($INSTALLED_DRIVER_VERSION) does not match Chrome version ($CHROME_VERSION). Proceeding anyway."
->>>>>>> 902c6d309fe9be96f566525e41f239f01de6e6c1
+
           fi
       - name: Run scraping script
         run: python scrape_and_plot.py
