@@ -6,7 +6,7 @@ import json
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 
 # Scrape strikes
@@ -66,37 +66,35 @@ now = datetime.now()
 for strike in new_strikes:
     try:
         lon, lat = strike["geometry"]["coordinates"]
-        if -44 <= lat <= -10 and 113 <= lon <= 154:  # Australia bounds
-            strike_data = {
-                "lat": lat,
-                "lon": lon,
-                "time": strike["properties"].get("time", now.isoformat())
-            }
-            if not any(s["lat"] == lat and s["lon"] == lon and s["time"] == strike_data["time"] for s in all_strikes):
-                all_strikes.append(strike_data)
+        strike_data = {
+            "lat": lat,
+            "lon": lon,
+            "time": strike["properties"].get("time", now.isoformat())
+        }
+        # Check for duplicates based on lat, lon, and time
+        if not any(s["lat"] == lat and s["lon"] == lon and s["time"] == strike_data["time"] for s in all_strikes):
+            all_strikes.append(strike_data)
     except (KeyError, TypeError) as e:
         print(f"[{datetime.now()}] Skipping malformed strike: {e}")
 
-# Filter for last 24 hours
-cutoff = now - timedelta(hours=24)
-all_strikes = [s for s in all_strikes if datetime.fromisoformat(s["time"]) > cutoff]
-print(f"[{datetime.now()}] Total Australia strikes (last 24h): {len(all_strikes)}")
+# No filtering for time or location; keep all strikes
+print(f"[{datetime.now()}] Total strikes (all time, worldwide): {len(all_strikes)}")
 
 # Save updated strikes
 with open(data_file, "w") as f:
     json.dump(all_strikes, f)
 
 # Plot
-plt.figure(figsize=(10, 10))
+plt.figure(figsize=(12, 8))
 ax = plt.axes(projection=ccrs.PlateCarree())
-ax.set_extent([113, 154, -44, -10], crs=ccrs.PlateCarree())
+ax.set_global()  # Show the entire world
 ax.add_feature(cfeature.COASTLINE)
 ax.add_feature(cfeature.BORDERS)
 
 for strike in all_strikes:
     plt.plot(strike["lon"], strike["lat"], 'ro', markersize=5, transform=ccrs.PlateCarree())
 
-plt.title(f"Australia Lightning Strikes - Last 24 Hours ({now.strftime('%Y-%m-%d %H:%M')})")
-plt.savefig("australia_lightning_24h.png", dpi=300, bbox_inches="tight")
+plt.title(f"Worldwide Lightning Strikes - All Time ({now.strftime('%Y-%m-%d %H:%M')})")
+plt.savefig("worldwide_lightning_all_time.png", dpi=300, bbox_inches="tight")
 plt.close()
-print("PNG saved as 'australia_lightning_24h.png'")
+print("PNG saved as 'worldwide_lightning_all_time.png'")
