@@ -97,8 +97,6 @@ for strike in all_strikes:
 plt.title(f"Worldwide Lightning Strikes - All Time ({now.strftime('%Y-%m-%d %H:%M')})")
 plt.savefig("worldwide_lightning_all_time.png", dpi=300, bbox_inches="tight")
 plt.close()
-<<<<<<< HEAD
+
 print("PNG saved as 'worldwide_lightning_all_time.png'")
-=======
-print("PNG saved as 'worldwide_lightning_all_time.png'")
->>>>>>> 902c6d309fe9be96f566525e41f239f01de6e6c1
+
