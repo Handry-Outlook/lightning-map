@@ -99,5 +99,3 @@ plt.savefig("worldwide_lightning_all_time.png", dpi=300, bbox_inches="tight")
 plt.close()
 
 print("PNG saved as 'worldwide_lightning_all_time.png'")
-
-
