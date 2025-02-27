@@ -38,10 +38,18 @@ jobs:
           # Remove any existing ChromeDriver to avoid conflicts
           sudo rm -f /usr/local/bin/chromedriver
           
+<<<<<<< HEAD
+=======
+
+>>>>>>> 397f90ccf69915a3f30b367085ffecefbe62ca61
           # Fetch the latest ChromeDriver version for this Chrome major version
           DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
           if echo "$DRIVER_VERSION" | grep -q "<Error>"; then
             echo "No exact match for Chrome $CHROME_VERSION. Trying latest releases..."
+<<<<<<< HEAD
+=======
+            # Fetch list of versions and extract with basic grep/sed
+>>>>>>> 397f90ccf69915a3f30b367085ffecefbe62ca61
             ALL_VERSIONS=$(curl -s "https://chromedriver.storage.googleapis.com/?delimiter=/&prefix=" | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | sort -V)
             echo "Available versions: $ALL_VERSIONS"
             DRIVER_VERSION=$(echo "$ALL_VERSIONS" | grep "^${CHROME_VERSION}" | tail -n 1)
@@ -65,6 +73,7 @@ jobs:
           DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
           if echo "$DRIVER_VERSION" | grep -q "<Error>"; then
             echo "No exact match for Chrome $CHROME_VERSION at chromedriver.storage.googleapis.com."
+<<<<<<< HEAD
             DRIVER_VERSION="133.0.6943.87"
             echo "Attempting fallback to edgedl.me.gvt1.com for version $DRIVER_VERSION..."
             wget -v "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$DRIVER_VERSION/linux64/chromedriver-linux64.zip" || {
@@ -73,6 +82,17 @@ jobs:
               wget -v "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$DRIVER_VERSION/linux64/chromedriver-linux64.zip" || {
                 echo "Failed to download ChromeDriver $DRIVER_VERSION from edgedl.me.gvt1.com. Falling back to latest known version."
                 DRIVER_VERSION="114.0.5735.90"
+=======
+            # Fallback to edgedl.me.gvt1.com with a known 133.x version
+            DRIVER_VERSION="133.0.6943.87"  # Trying a lower patch version that might exist
+            echo "Attempting fallback to edgedl.me.gvt1.com for version $DRIVER_VERSION..."
+            wget -v "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$DRIVER_VERSION/linux64/chromedriver-linux64.zip" || {
+              echo "Failed to download ChromeDriver $DRIVER_VERSION from edgedl.me.gvt1.com. Trying alternative version..."
+              DRIVER_VERSION="133.0.6943.106"  # Another possible 133.x version
+              wget -v "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$DRIVER_VERSION/linux64/chromedriver-linux64.zip" || {
+                echo "Failed to download ChromeDriver $DRIVER_VERSION from edgedl.me.gvt1.com. Falling back to latest known version."
+                DRIVER_VERSION="114.0.5735.90"  # Last resort: match an older Chrome version
+>>>>>>> 397f90ccf69915a3f30b367085ffecefbe62ca61
                 wget -v "https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip" || {
                   echo "All download attempts failed."
                   exit 1
@@ -85,7 +105,11 @@ jobs:
           fi
           
           # Unzip and install ChromeDriver
+<<<<<<< HEAD
           unzip chromedriver_linux64.zip
+=======
+          unzip chromedriver-linux64.zip
+>>>>>>> 397f90ccf69915a3f30b367085ffecefbe62ca61
           if [ -f chromedriver-linux64/chromedriver ]; then
             sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
           else
@@ -98,7 +122,16 @@ jobs:
           INSTALLED_DRIVER_VERSION=$(chromedriver --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
           echo "Installed ChromeDriver version: $INSTALLED_DRIVER_VERSION"
           if ! echo "$INSTALLED_DRIVER_VERSION" | grep -q "^${CHROME_VERSION}"; then
+<<<<<<< HEAD
             echo "Warning: ChromeDriver version ($INSTALLED_DRIVER_VERSION) does not match Chrome version ($CHROME_VERSION). Proceeding anyway."
+=======
+
+            echo "Error: ChromeDriver version ($INSTALLED_DRIVER_VERSION) does not match Chrome version ($CHROME_VERSION)"
+            exit 1
+
+            echo "Warning: ChromeDriver version ($INSTALLED_DRIVER_VERSION) does not match Chrome version ($CHROME_VERSION). Proceeding anyway."
+
+>>>>>>> 397f90ccf69915a3f30b367085ffecefbe62ca61
           fi
       - name: Run scraping script
         run: python scrape_and_plot.py
@@ -106,9 +139,15 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+<<<<<<< HEAD
           git add strikes.json worldwide_lightning_all_time.png
           git commit -m "Update strikes and PNG" || echo "No changes to commit"
           echo "Pulling latest changes from remote..."
           git pull --rebase origin main
           echo "Pushing updated changes..."
           git push
+=======
+          git add strikes.json australia_lightning_24h.png
+          git commit -m "Update strikes and PNG" || echo "No changes to commit"
+          git push
+>>>>>>> 397f90ccf69915a3f30b367085ffecefbe62ca61
