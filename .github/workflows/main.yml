@@ -38,7 +38,6 @@ jobs:
           # Remove any existing ChromeDriver to avoid conflicts
           sudo rm -f /usr/local/bin/chromedriver
           
-
           # Fetch the latest ChromeDriver version for this Chrome major version
           DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
           if echo "$DRIVER_VERSION" | grep -q "<Error>"; then
@@ -101,12 +100,7 @@ jobs:
           INSTALLED_DRIVER_VERSION=$(chromedriver --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
           echo "Installed ChromeDriver version: $INSTALLED_DRIVER_VERSION"
           if ! echo "$INSTALLED_DRIVER_VERSION" | grep -q "^${CHROME_VERSION}"; then
-
-            echo "Error: ChromeDriver version ($INSTALLED_DRIVER_VERSION) does not match Chrome version ($CHROME_VERSION)"
-            exit 1
-
             echo "Warning: ChromeDriver version ($INSTALLED_DRIVER_VERSION) does not match Chrome version ($CHROME_VERSION). Proceeding anyway."
-
           fi
       - name: Run scraping script
         run: python scrape_and_plot.py
@@ -116,4 +110,6 @@ jobs:
           git config --local user.name "GitHub Action"
           git add strikes.json worldwide_lightning_all_time.png
           git commit -m "Update strikes and PNG" || echo "No changes to commit"
+          # Pull with rebase to incorporate remote changes
+          git pull --rebase origin main
           git push
