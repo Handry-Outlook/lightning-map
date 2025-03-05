@@ -42,26 +42,35 @@ jobs:
           
           # Attempt to fetch latest ChromeDriver for major version
           DRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_${CHROME_MAJOR_VERSION}")
-          echo "Fetched DRIVER_VERSION from LATEST_RELEASE_${CHROME_MAJOR_VERSION}: $DRIVER_VERSION"
+          echo "Fetched DRIVER_VERSION from LATEST_RELEASE_${CHROME_MAJOR_VERSION}: '$DRIVER_VERSION'"
           
-          # Validate DRIVER_VERSION
+          # Debug: Check if DRIVER_VERSION is empty or invalid
           if [ -z "$DRIVER_VERSION" ] || echo "$DRIVER_VERSION" | grep -q "404" || ! echo "$DRIVER_VERSION" | grep -q "^${CHROME_MAJOR_VERSION}"; then
-            echo "Invalid or mismatched DRIVER_VERSION. Forcing a known 134.x version."
-            DRIVER_VERSION="134.0.6998.35"  # Known compatible version as of March 2025
+            echo "DRIVER_VERSION is invalid or does not match Chrome major version ($CHROME_MAJOR_VERSION). Forcing 134.0.6998.35."
+            DRIVER_VERSION="134.0.6998.35"
+          else
+            echo "DRIVER_VERSION appears valid: $DRIVER_VERSION"
           fi
-          echo "Selected ChromeDriver version: $DRIVER_VERSION"
+          
+          # Final confirmation of DRIVER_VERSION
+          echo "Final selected ChromeDriver version: $DRIVER_VERSION"
           
           # Download and install ChromeDriver
-          echo "Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip"
-          wget -q "https://storage.googleapis.com/chrome-for-testing-public/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip" || {
-            echo "Download failed for $DRIVER_VERSION. Trying fallback version 134.0.6998.35."
+          DOWNLOAD_URL="https://storage.googleapis.com/chrome-for-testing-public/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip"
+          echo "Attempting download from: $DOWNLOAD_URL"
+          wget -q "$DOWNLOAD_URL" -O chromedriver-linux64.zip || {
+            echo "Download failed for $DRIVER_VERSION. Forcing fallback to 134.0.6998.35."
             DRIVER_VERSION="134.0.6998.35"
-            wget -q "https://storage.googleapis.com/chrome-for-testing-public/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip" || {
-              echo "Error: Failed to download ChromeDriver for both attempts."
+            FALLBACK_URL="https://storage.googleapis.com/chrome-for-testing-public/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip"
+            echo "Attempting fallback download from: $FALLBACK_URL"
+            wget -q "$FALLBACK_URL" -O chromedriver-linux64.zip || {
+              echo "Error: Failed to download ChromeDriver for both $DRIVER_VERSION and fallback."
               exit 1
             }
           }
-          unzip chromedriver-linux64.zip
+          
+          # Unzip and install
+          unzip -o chromedriver-linux64.zip
           sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/chromedriver
           
@@ -69,7 +78,7 @@ jobs:
           INSTALLED_DRIVER_VERSION=$(chromedriver --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
           echo "Installed ChromeDriver version: $INSTALLED_DRIVER_VERSION"
           if ! echo "$INSTALLED_DRIVER_VERSION" | grep -q "^${CHROME_MAJOR_VERSION}"; then
-            echo "Error: ChromeDriver version ($INSTALLED_DRIVER_VERSION) does not match Chrome major version ($CHROME_MAJOR_VERSION)"
+            echo "Error: Installed ChromeDriver version ($INSTALLED_DRIVER_VERSION) does not match Chrome major version ($CHROME_MAJOR_VERSION)"
             exit 1
           fi
           echo "Chrome and ChromeDriver versions are compatible."
