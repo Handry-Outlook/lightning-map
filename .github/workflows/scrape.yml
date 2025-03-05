@@ -31,23 +31,36 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
           
-          # Get Chrome major version
-          CHROME_VERSION=$(google-chrome --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+" | cut -d'.' -f1)
-          echo "Chrome major version: $CHROME_VERSION"
+          # Get full Chrome version and major version
+          FULL_CHROME_VERSION=$(google-chrome --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
+          CHROME_MAJOR_VERSION=$(echo "$FULL_CHROME_VERSION" | cut -d'.' -f1)
+          echo "Full Chrome version: $FULL_CHROME_VERSION"
+          echo "Chrome major version: $CHROME_MAJOR_VERSION"
           
           # Remove any existing ChromeDriver
           sudo rm -f /usr/local/bin/chromedriver
           
-          # Fetch the latest ChromeDriver for the major version from chrome-for-testing
-          DRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_${CHROME_VERSION}")
-          if [ -z "$DRIVER_VERSION" ]; then
-            echo "No ChromeDriver found for Chrome $CHROME_VERSION. Falling back to latest known version."
-            DRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE" | tail -n 1)
+          # Fetch the latest ChromeDriver for the major version
+          DRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_${CHROME_MAJOR_VERSION}")
+          echo "Fetched DRIVER_VERSION: $DRIVER_VERSION"
+          
+          # Check if DRIVER_VERSION is valid
+          if [ -z "$DRIVER_VERSION" ] || echo "$DRIVER_VERSION" | grep -q "404"; then
+            echo "No ChromeDriver found for Chrome $CHROME_MAJOR_VERSION. Trying full version fallback..."
+            DRIVER_VERSION=$FULL_CHROME_VERSION
+            wget -q --spider "https://storage.googleapis.com/chrome-for-testing-public/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip" || {
+              echo "Full version $DRIVER_VERSION not available. Falling back to latest known 134.x version."
+              DRIVER_VERSION="134.0.6998.35"  # Known 134.x version as of March 2025
+            }
           fi
-          echo "Using ChromeDriver version: $DRIVER_VERSION"
+          echo "Final ChromeDriver version to use: $DRIVER_VERSION"
           
           # Download and install ChromeDriver
-          wget -q "https://storage.googleapis.com/chrome-for-testing-public/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip"
+          wget -q "https://storage.googleapis.com/chrome-for-testing-public/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip" || {
+            echo "Failed to download ChromeDriver $DRIVER_VERSION. Trying latest known version."
+            DRIVER_VERSION="134.0.6998.35"
+            wget -q "https://storage.googleapis.com/chrome-for-testing-public/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip"
+          }
           unzip chromedriver-linux64.zip
           sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/chromedriver
@@ -55,8 +68,9 @@ jobs:
           # Verify versions
           INSTALLED_DRIVER_VERSION=$(chromedriver --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
           echo "Installed ChromeDriver version: $INSTALLED_DRIVER_VERSION"
-          if ! echo "$INSTALLED_DRIVER_VERSION" | grep -q "^${CHROME_VERSION}"; then
-            echo "Warning: ChromeDriver version ($INSTALLED_DRIVER_VERSION) may not fully match Chrome version ($CHROME_VERSION). Proceeding anyway."
+          if ! echo "$INSTALLED_DRIVER_VERSION" | grep -q "^${CHROME_MAJOR_VERSION}"; then
+            echo "Error: ChromeDriver version ($INSTALLED_DRIVER_VERSION) does not match Chrome major version ($CHROME_MAJOR_VERSION)"
+            exit 1
           fi
       - name: Run scraping script
         run: python scrape_and_plot.py
