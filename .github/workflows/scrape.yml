@@ -37,14 +37,16 @@ jobs:
           echo "Full Chrome version: $FULL_CHROME_VERSION"
           echo "Chrome major version: $CHROME_MAJOR_VERSION"
           
-          # Remove any existing ChromeDriver
+          # Remove any existing ChromeDriver globally and locally
           sudo rm -f /usr/local/bin/chromedriver
+          rm -f chromedriver chromedriver-linux64.zip
+          echo "Cleared any existing ChromeDriver files."
           
           # Set a known compatible ChromeDriver version for Chrome 134.x
           DRIVER_VERSION="134.0.6998.35"
           echo "Selected ChromeDriver version: $DRIVER_VERSION"
           
-          # Download ChromeDriver
+          # Download ChromeDriver with verbose output
           DOWNLOAD_URL="https://storage.googleapis.com/chrome-for-testing-public/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip"
           echo "Downloading from: $DOWNLOAD_URL"
           wget -v "$DOWNLOAD_URL" -O chromedriver-linux64.zip || {
@@ -52,12 +54,28 @@ jobs:
             exit 1
           }
           
-          # Unzip and install
+          # Verify download
+          ls -lh chromedriver-linux64.zip
+          echo "Downloaded file size: $(stat -c %s chromedriver-linux64.zip) bytes"
+          
+          # Unzip and verify contents
           unzip -o chromedriver-linux64.zip
-          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+          ls -lh chromedriver-linux64/chromedriver
+          
+          # Check version before moving
+          ./chromedriver-linux64/chromedriver --version
+          EXPECTED_VERSION="134.0.6998.35"
+          if ! ./chromedriver-linux64/chromedriver --version | grep -q "$EXPECTED_VERSION"; then
+            echo "Error: Downloaded ChromeDriver version does not match expected $EXPECTED_VERSION"
+            exit 1
+          fi
+          echo "Verified downloaded ChromeDriver version matches $EXPECTED_VERSION"
+          
+          # Install ChromeDriver
+          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
           sudo chmod +x /usr/local/bin/chromedriver
           
-          # Verify versions
+          # Verify installed version
           INSTALLED_DRIVER_VERSION=$(chromedriver --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
           echo "Installed ChromeDriver version: $INSTALLED_DRIVER_VERSION"
           if ! echo "$INSTALLED_DRIVER_VERSION" | grep -q "^${CHROME_MAJOR_VERSION}"; then
